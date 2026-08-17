@@ -48,6 +48,7 @@ class Retiro {
   + calcularTotalGastos()
   + compartirInfo()
 }
+
 class EstadoRetiro {
   - valor
   + crear()
@@ -128,4 +129,16 @@ class Recordatorio {
   + notificar()
   + marcarComoLeido()
 }
+class TipoRecordatorio {
+  - nombreTipo
+  + crear()
+  + mostrar()
+}
+
+' Relaciones desde Usuario
+Usuario -right-> " 1..* " Retiro
+Usuario -down-> " 1..* " Recordatorio
+
+' Relacion de Recordatorio
+Recordatorio -right-> " 1 " TipoRecordatorio
 @enduml
