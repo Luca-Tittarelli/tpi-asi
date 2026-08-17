@@ -1,0 +1,51 @@
+@startuml Retiros
+
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 70
+
+class Usuario {
+  - nombre
+  - apellido
+  - email
+  - telefono
+  - retiro : Retiro
+  - recordatorio : Recordatorio
+  + crear()
+  + mostrar()
+  + conocerRetiro()
+  + conocerRecordatorio()
+  + calcularGastosTotales()
+  + calcularGastosPorPeriodo()
+}
+
+class Retiro {
+  - nombre
+  - ubicacion
+  - fechaInicio
+  - fechaFin
+  - duracion
+  - costoTotal
+  - requisitos
+  - contactoOrganizador
+  - estado : EstadoRetiro
+  - actividad : Actividad
+  - acompanante : Acompanante
+  - pago : Pago
+  - valoracion : Valoracion
+  + crear()
+  + mostrar()
+  + conocerEstadoRetiro()
+  + conocerActividad()
+  + conocerAcompanante()
+  + conocerPago()
+  + conocerValoracion()
+  + cambiarEstado()
+  + agregarActividad()
+  + agregarAcompanante()
+  + registrarPago()
+  + registrarValoracion()
+  + calcularTotalGastos()
+  + compartirInfo()
+}
+@enduml
