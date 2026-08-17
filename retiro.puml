@@ -47,6 +47,7 @@ class Retiro {
   + registrarValoracion()
   + calcularTotalGastos()
   + compartirInfo()
+  + filtrarRetiros()
 }
 
 class EstadoRetiro {
@@ -77,6 +78,7 @@ class Acompanante {
   + conocerTipoVinculo()
   + modificar()
 }
+
 class TipoVinculo {
   - nombreVinculo
   + crear()
@@ -129,6 +131,7 @@ class Recordatorio {
   + notificar()
   + marcarComoLeido()
 }
+
 class TipoRecordatorio {
   - nombreTipo
   + crear()
@@ -136,20 +139,24 @@ class TipoRecordatorio {
 }
 
 ' Relaciones desde Usuario
-Usuario -right-> " 1..* " Retiro
-Usuario -down-> " 1..* " Recordatorio
+Usuario -right-> " 0..* " Retiro
+Usuario -down-> " 0..* " Recordatorio
 
 ' Relacion de Recordatorio
 Recordatorio -right-> " 1 " TipoRecordatorio
+
+
 Retiro -up-> " 1 " EstadoRetiro
-Retiro -right-> " 0..1 " Valoracion
-Retiro <--> " 1..* " Acompanante
+Retiro o-right-> " 0..1 " Valoracion
+Retiro --> " 0..* " Acompanante
 Acompanante -down-> " 1 " TipoVinculo
 
-Retiro o-down-> " 1..* " Actividad
-Retiro o-down-> " 1..* " Pago
+
+Retiro *-down-> " 0..* " Actividad
+Retiro *-down-> " 0..* " Pago
 
 ' Relaciones de Pago
 Pago -down-> " 1 " MetodoPago
 Pago -right-> " 1 " EstadoPago
+
 @enduml
