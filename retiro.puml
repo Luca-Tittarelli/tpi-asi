@@ -76,4 +76,29 @@ class Acompanante {
   + conocerTipoVinculo()
   + modificar()
 }
+class TipoVinculo {
+  - nombreVinculo
+  + crear()
+  + mostrar()
+}
+
+class Pago {
+  - monto
+  - fechaPago
+  - comprobante
+  - metodoPago : MetodoPago
+  - estadoPago : EstadoPago
+  + crear()
+  + mostrar()
+  + conocerMetodoPago()
+  + conocerEstadoPago()
+  + registrarPago()
+  + cambiarEstadoPago()
+}
+
+class MetodoPago {
+  - nombreMetodo
+  + crear()
+  + mostrar()
+}
 @enduml
