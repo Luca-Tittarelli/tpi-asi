@@ -101,4 +101,31 @@ class MetodoPago {
   + crear()
   + mostrar()
 }
+
+class EstadoPago {
+  - valor
+  + crear()
+  + mostrar()
+}
+
+class Valoracion {
+  - puntuacion
+  - comentario
+  - fechaValoracion
+  + crear()
+  + mostrar()
+  + modificar()
+}
+
+class Recordatorio {
+  - fechaHora
+  - mensaje
+  - leido
+  - tipo : TipoRecordatorio
+  + crear()
+  + mostrar()
+  + conocerTipoRecordatorio()
+  + notificar()
+  + marcarComoLeido()
+}
 @enduml
