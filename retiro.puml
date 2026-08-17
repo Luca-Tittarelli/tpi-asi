@@ -48,4 +48,32 @@ class Retiro {
   + calcularTotalGastos()
   + compartirInfo()
 }
+class EstadoRetiro {
+  - valor
+  + crear()
+  + mostrar()
+  + tomarValor()
+  + mostrarValor()
+}
+
+class Actividad {
+  - nombre
+  - descripcion
+  - fechaHora
+  - costo
+  + crear()
+  + mostrar()
+  + modificar()
+}
+
+class Acompanante {
+  - nombre
+  - apellido
+  - telefono
+  - vinculo : TipoVinculo
+  + crear()
+  + mostrar()
+  + conocerTipoVinculo()
+  + modificar()
+}
 @enduml
