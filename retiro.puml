@@ -9,12 +9,10 @@ class Usuario {
   - apellido
   - email
   - telefono
-  - retiro : Retiro
-  - recordatorio : Recordatorio
+  - retiros : Retiro
   + crear()
   + mostrar()
   + conocerRetiro()
-  + conocerRecordatorio()
   + calcularGastosTotales()
   + calcularGastosPorPeriodo()
 }
@@ -29,9 +27,10 @@ class Retiro {
   - requisitos
   - contactoOrganizador
   - estado : EstadoRetiro
-  - actividad : Actividad
-  - acompanante : Acompanante
-  - pago : Pago
+  - recordatorios : Recordatorio
+  - actividades : Actividad
+  - acompanantes : Acompanante
+  - pagos : Pago
   - valoracion : Valoracion
   + crear()
   + mostrar()
@@ -138,22 +137,22 @@ class TipoRecordatorio {
   + mostrar()
 }
 
-' Relaciones desde Usuario
+' Relacion desde Usuario
 Usuario -right-> " 0..* " Retiro
-Usuario -down-> " 0..* " Recordatorio
+
+' Relaciones desde Retiro
+Retiro -up-> " 1 " EstadoRetiro
+Retiro *-up-> " 0..* " Recordatorio
+Retiro *-right-> " 0..1 " Valoracion
+Retiro o-right-> " 0..* " Acompanante
+Retiro *-down-> " 0..* " Actividad
+Retiro *-down-> " 0..* " Pago
 
 ' Relacion de Recordatorio
 Recordatorio -right-> " 1 " TipoRecordatorio
 
-
-Retiro -up-> " 1 " EstadoRetiro
-Retiro o-right-> " 0..1 " Valoracion
-Retiro --> " 0..* " Acompanante
+' Relacion de Acompanante
 Acompanante -down-> " 1 " TipoVinculo
-
-
-Retiro *-down-> " 0..* " Actividad
-Retiro *-down-> " 0..* " Pago
 
 ' Relaciones de Pago
 Pago -down-> " 1 " MetodoPago
