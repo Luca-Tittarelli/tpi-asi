@@ -96,7 +96,7 @@ export default function App() {
     descripcion: "Tres días para bajar el ritmo y reconectar con vos. Yoga suave, meditación y caminatas en las sierras, con alojamiento y alimentación vegetariana incluidos.",
     costo: 185000,
     estado: "Reservado",
-    requisitos: "• Traer mat, ropa cómoda y abrigo.\n• Informar alergias o restricciones alimentarias.\n• No se necesita experiencia previa.",
+    requisitos: "• Traer mate, ropa cómoda y abrigo.\n• Informar alergias o restricciones alimentarias.\n• No se necesita experiencia previa.",
     organizador: {
       nombre: "Clara Ríos",
       subtitulo: "Espacio Raíz · @espacio.raiz",
