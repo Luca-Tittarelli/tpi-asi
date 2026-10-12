@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Gestión de Retiros · Prototipo ASI</title>
+  
+  <!-- Tipografías elegantes: Newsreader (Serif) y Plus Jakarta Sans (Cuerpo) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Newsreader', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            app: {
+              bg: '#F5F4EF',
+              card: '#FFFFFF',
+              border: '#E8E6DF',
+              dark: '#2D4B3E',
+              darkHover: '#233C31',
+              sage: '#EBF2ED',
+              sageBorder: '#CADCCE',
+              text: '#1C221E',
+              muted: '#737873',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React 18, ReactDOM & Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      background-color: #EBEAE5;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-0 sm:p-4">
+
+  <div id="root" class="w-full max-w-[420px] bg-[#F5F4EF] min-h-screen sm:min-h-[844px] sm:max-h-[880px] sm:rounded-[36px] sm:shadow-2xl sm:border-[8px] sm:border-[#1E201E] overflow-hidden flex flex-col relative"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // --- ICONOS SVG ---
+    const IconArrowLeft = () => (
+      <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+    );
+
+    const IconShare = () => (
+      <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+      </svg>
+    );
+
+    const IconClose = () => (
+      <svg className="w-4 h-4 text-gray-500 hover:text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    );
+
+    const IconMapPin = () => (
+      <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    );
+
+    const IconCalendar = () => (
+      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    );
+
+    const IconClock = () => (
+      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
+
+    const IconLotus = () => (
+      <svg className="w-5 h-5 text-[#2D4B3E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c0 4.5-3.5 8-3.5 12a3.5 3.5 0 007 0c0-4-3.5-7.5-3.5-12z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.5 15c-2.5 0-5.5-1.5-6.5-5 2.5 0 5 1.5 6.5 5z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.5 15c2.5 0 5.5-1.5 6.5-5-2.5 0-5 1.5-6.5 5z" />
+      </svg>
+    );
+
+    const IconPhone = () => (
+      <svg className="w-4 h-4 text-[#2D4B3E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+      </svg>
+    );
+
+    const IconMessage = () => (
+      <svg className="w-4 h-4 text-[#2D4B3E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+    );
+
+    const IconCheck = () => (
+      <svg className="w-3.5 h-3.5 text-[#2D4B3E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+      </svg>
+    );
+
+    const IconTrash = () => (
+      <svg className="w-4 h-4 text-gray-400 hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    );
+
+    // --- DATOS INICIALES DEL RETIRO ---
+    const initialRetreat = {
+      nombre: "Retiro de Yoga & Meditación",
+      ubicacion: "Capilla del Monte, Córdoba",
+      fechaInicio: "2026-11-20",
+      fechaFin: "2026-11-22",
+      fechaInicioDisplay: "20 nov. 2026",
+      fechaFinDisplay: "22 nov. 2026",
+      horario: "16:00",
+      duracion: "3 días · 2 noches",
+      descripcion: "Tres días para bajar el ritmo y reconectar con vos. Yoga suave, meditación y caminatas en las sierras, con alojamiento y alimentación vegetariana incluidos.",
+      costo: 185000,
+      estado: "Reservado",
+      requisitos: "• Traer mat, ropa cómoda y abrigo.\n• Informar alergias o restricciones alimentarias.\n• No se necesita experiencia previa.",
+      organizador: {
+        nombre: "Clara Ríos",
+        subtitulo: "Espacio Raíz · @espacio.raiz",
+        telefono: "+54 9 351 612 4080",
+        redes: "@espacio.raiz"
+      },
+      acompanantes: [
+        { id: 1, nombre: "Lucía", apellido: "Martínez", relacion: "Hermana", iniciales: "LM" },
+        { id: 2, nombre: "Tomás", apellido: "Vega", relacion: "Pareja", iniciales: "TV" },
+      ],
+      actividades: [
+        { id: 101, dia: "20", mes: "NOV", horario: "17:00 - 18:00", nombre: "Círculo de bienvenida", lugar: "Salón principal", tipo: "Incluido", costo: 0 },
+        { id: 102, dia: "21", mes: "NOV", horario: "08:00 - 09:30", nombre: "Yoga & meditación", lugar: "Deck al aire libre", tipo: "Incluido", costo: 0 },
+        { id: 103, dia: "21", mes: "NOV", horario: "18:00 - 19:30", nombre: "Taller de Sonoterapia", lugar: "Salón principal", tipo: "Adicional $15.000", costo: 15000 }
+      ],
+      pagos: {
+        total: 185000,
+        pagado: 90000,
+        pendiente: 95000,
+        detalle: "Retiro $170.000 + sonoterapia $15.000"
+      },
+      resena: {
+        calificacion: 4,
+        texto: "En mi visita anterior, la calidez de Clara y la meditación al amanecer fueron lo mejor. Me gustaría tener más tiempo libre entre talleres.",
+        nota: "Nota personal · Experiencia de 2025"
+      }
+    };
+
+    function App() {
+      // Vista activa: 'detail' (Consulta CU 3) o 'create' (Registrar retiro CU 1)
+      const [currentView, setCurrentView] = useState('detail');
+      
+      // Estado del retiro
+      const [retreat, setRetreat] = useState(initialRetreat);
+
+      // Modal de Nueva Actividad (Registrar Actividad CU 2)
+      const [showActivityModal, setShowActivityModal] = useState(false);
+      
+      // Modal de Nuevo Acompañante (CU 1 Pasos 8 y 9)
+      const [showCompanionModal, setShowCompanionModal] = useState(false);
+
+      // Feedback toast
+      const [toast, setToast] = useState(null);
+
+      const triggerToast = (msg) => {
+        setToast(msg);
+        setTimeout(() => setToast(null), 3000);
+      };
+
+      // Guardar actividad (CU 2)
+      const handleSaveActivity = (newAct) => {
+        const costNum = Number(newAct.costo) || 0;
+        const actObj = {
+          id: Date.now(),
+          dia: "21",
+          mes: "NOV",
+          horario: `${newAct.hora || "18:00"} - 19:30`,
+          nombre: newAct.nombre,
+          lugar: "Salón principal",
+          tipo: costNum > 0 ? `Adicional $${costNum.toLocaleString('es-AR')}` : "Incluido",
+          costo: costNum
+        };
+
+        const newTotal = retreat.costo + costNum;
+        setRetreat(prev => ({
+          ...prev,
+          actividades: [...prev.actividades, actObj],
+          costo: newTotal,
+          pagos: {
+            ...prev.pagos,
+            total: newTotal,
+            pendiente: prev.pagos.pendiente + costNum,
+            detalle: `${prev.pagos.detalle} + ${actObj.nombre} ($${costNum.toLocaleString('es-AR')})`
+          }
+        }));
+
+        setShowActivityModal(false);
+        triggerToast("✓ Actividad registrada");
+      };
+
+      // Guardar acompañante (CU 1)
+      const handleSaveCompanion = (comp) => {
+        const initials = `${(comp.nombre || 'A')[0]}${(comp.apellido || 'C')[0]}`.toUpperCase();
+        setRetreat(prev => ({
+          ...prev,
+          acompanantes: [...prev.acompanantes, {
+            id: Date.now(),
+            nombre: comp.nombre,
+            apellido: comp.apellido,
+            relacion: comp.relacion || "Acompañante",
+            iniciales: initials
+          }]
+        }));
+        setShowCompanionModal(false);
+        triggerToast("✓ Acompañante añadido");
+      };
+
+      const handleRemoveCompanion = (id) => {
+        setRetreat(prev => ({
+          ...prev,
+          acompanantes: prev.acompanantes.filter(c => c.id !== id)
+        }));
+      };
+
+      return (
+        <div className="flex-1 flex flex-col h-full bg-[#F5F4EF] text-[#1C221E] overflow-hidden">
+          
+          {/* TOAST FLOTANTE */}
+          {toast && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-[#2D4B3E] text-white px-4 py-2 rounded-full text-xs font-semibold shadow-xl border border-[#446C5B]">
+              {toast}
+            </div>
+          )}
+
+          {/* CONTENIDO PRINCIPAL EN RESOLUCIÓN MOBILE */}
+          <div className="flex-1 overflow-y-auto hide-scrollbar p-4 pb-20">
+            {currentView === 'detail' ? (
+              <DetalleView 
+                retreat={retreat}
+                onOpenNewRetreat={() => setCurrentView('create')}
+                onOpenActivity={() => setShowActivityModal(true)}
+              />
+            ) : (
+              <NuevoRetiroView 
+                retreat={retreat}
+                onCancel={() => setCurrentView('detail')}
+                onSave={(updated) => {
+                  setRetreat(updated);
+                  setCurrentView('detail');
+                  triggerToast("✓ Retiro guardado");
+                }}
+                onOpenActivityModal={() => setShowActivityModal(true)}
+                onOpenCompanionModal={() => setShowCompanionModal(true)}
+                onRemoveCompanion={handleRemoveCompanion}
+              />
+            )}
+          </div>
+
+          {/* BARRA DE NAVEGACIÓN INFERIOR (SENCILLA & MOBILE) */}
+          <div className="border-t border-[#E6E4DD] bg-white/95 backdrop-blur px-6 py-2.5 flex items-center justify-around z-30">
+            <button
+              onClick={() => setCurrentView('detail')}
+              className={`flex flex-col items-center gap-1 text-[11px] font-medium transition ${
+                currentView === 'detail' ? 'text-[#2D4B3E] font-bold' : 'text-stone-400 hover:text-stone-700'
+              }`}
+            >
+              <span className="text-base">📋</span>
+              <span>Detalle Retiro</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('create')}
+              className={`flex flex-col items-center gap-1 text-[11px] font-medium transition ${
+                currentView === 'create' ? 'text-[#2D4B3E] font-bold' : 'text-stone-400 hover:text-stone-700'
+              }`}
+            >
+              <span className="text-base">➕</span>
+              <span>Registrar Retiro</span>
+            </button>
+          </div>
+
+          {/* ============================================================== */}
+          {/* MODAL: REGISTRAR ACTIVIDAD (CU 2)                              */}
+          {/* ============================================================== */}
+          {showActivityModal && (
+            <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm flex flex-col justify-end">
+              <div className="bg-[#F8F7F3] rounded-t-[32px] p-5 shadow-2xl border-t border-[#E5E2DA] max-h-[90%] overflow-y-auto">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h2 className="font-serif text-2xl font-semibold text-[#1C221E]">Nueva Actividad</h2>
+                    <p className="text-[11px] text-[#737873]">Retiro: {retreat.nombre}</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowActivityModal(false)}
+                    className="w-7 h-7 rounded-full bg-[#EAE8E1] flex items-center justify-center text-gray-600"
+                  >
+                    <IconClose />
+                  </button>
+                </div>
+
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = e.target;
+                  handleSaveActivity({
+                    nombre: form.nombre.value,
+                    fecha: form.fecha.value,
+                    hora: form.hora.value,
+                    costo: form.costo.value,
+                    descripcion: form.descripcion.value
+                  });
+                }} className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-stone-600 mb-1">Nombre de la actividad</label>
+                    <input 
+                      name="nombre" 
+                      type="text" 
+                      defaultValue="Taller de Sonoterapia"
+                      required
+                      className="w-full bg-[#FAF9F5] border border-[#DDD9CE] rounded-xl px-3.5 py-2.5 text-xs text-stone-900 focus:outline-none focus:border-[#2D4B3E]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-medium text-stone-600 mb-1">Fecha</label>
+                      <input 
+                        name="fecha" 
+                        type="date" 
+                        defaultValue="2026-11-21"
+                        required
+                        className="w-full bg-[#FAF9F5] border border-[#DDD9CE] rounded-xl px-2.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#2D4B3E]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-stone-600 mb-1">Hora</label>
+                      <input 
+                        name="hora" 
+                        type="time" 
+                        defaultValue="18:00"
+                        required
+                        className="w-full bg-[#FAF9F5] border border-[#DDD9CE] rounded-xl px-2.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#2D4B3E]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-stone-600 mb-1">Costo Adicional ($) <span className="text-stone-400 font-normal">(Opcional)</span></label>
+                    <input 
+                      name="costo" 
+                      type="number" 
+                      defaultValue="15000"
+                      className="w-full bg-[#FAF9F5] border border-[#DDD9CE] rounded-xl px-3.5 py-2.5 text-xs text-stone-900 focus:outline-none focus:border-[#2D4B3E]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-stone-600 mb-1">Descripción de la actividad</label>
+                    <textarea 
+                      name="descripcion" 
+                      rows="3"
+                      defaultValue="Un viaje sonoro con cuencos tibetanos para relajar el cuerpo y aquietar la mente. Incluye todos los materiales."
+                      className="w-full bg-[#FAF9F5] border border-[#DDD9CE] rounded-xl p-3 text-xs text-stone-900 leading-relaxed focus:outline-none focus:border-[#2D4B3E]"
+                    ></textarea>
+                  </div>
+
+                  <div className="pt-2 space-y-2">
+                    <button 
+                      type="button"
+                      onClick={() => setShowActivityModal(false)}
+                      className="w-full py-2.5 rounded-xl border border-[#DDD9CE] bg-white text-xs font-medium text-stone-700"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      type="submit"
+                      className="w-full py-3 rounded-xl bg-[#2D4B3E] text-white text-xs font-bold uppercase tracking-wider shadow-md hover:bg-[#233C31]"
+                    >
+                      GUARDAR ACTIVIDAD
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* MODAL: AGREGAR ACOMPAÑANTE (CU 1 Pasos 8-9)                    */}
+          {/* ============================================================== */}
+          {showCompanionModal && (
+            <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm flex flex-col justify-end">
+              <div className="bg-[#F8F7F3] rounded-t-[32px] p-5 shadow-2xl border-t border-[#E5E2DA]">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h2 className="font-serif text-2xl font-semibold text-[#1C221E]">Nuevo Acompañante</h2>
+                    <p className="text-[11px] text-[#737873]">Registrar persona para el viaje</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowCompanionModal(false)}
+                    className="w-7 h-7 rounded-full bg-[#EAE8E1] flex items-center justify-center text-gray-600"
+                  >
+                    <IconClose />
+                  </button>
+                </div>
+
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = e.target;
+                  handleSaveCompanion({
+                    nombre: form.nombre.value,
+                    apellido: form.apellido.value,
+                    relacion: form.relacion.value,
+                    telefono: form.telefono.value
+                  });
+                }} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-medium text-stone-600 mb-1">Nombre</label>
+                      <input name="nombre" type="text" required placeholder="Sofía" className="w-full bg-[#FAF9F5] border border-[#DDD9CE] rounded-xl px-3 py-2 text-xs text-stone-900" />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-stone-600 mb-1">Apellido</label>
+                      <input name="apellido" type="text" required placeholder="Gómez" className="w-full bg-[#FAF9F5] border border-[#DDD9CE] rounded-xl px-3 py-2 text-xs text-stone-900" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-stone-600 mb-1">Relación</label>
+                    <select name="relacion" className="w-full bg-[#FAF9F5] border border-[#DDD9CE] rounded-xl px-3 py-2 text-xs text-stone-900">
+                      <option value="Hermana">Hermana</option>
+                      <option value="Pareja">Pareja</option>
+                      <option value="Amigo/a">Amigo/a</option>
+                      <option value="Familiar">Familiar</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-stone-600 mb-1">Teléfono</label>
+                    <input name="telefono" type="tel" placeholder="+54 9 351..." className="w-full bg-[#FAF9F5] border border-[#DDD9CE] rounded-xl px-3 py-2 text-xs text-stone-900" />
+                  </div>
+
+                  <div className="pt-2 space-y-2">
+                    <button type="button" onClick={() => setShowCompanionModal(false)} className="w-full py-2.5 rounded-xl border border-[#DDD9CE] bg-white text-xs font-medium text-stone-700">
+                      Cancelar
+                    </button>
+                    <button type="submit" className="w-full py-3 rounded-xl bg-[#2D4B3E] text-white text-xs font-bold uppercase tracking-wider">
+                      AGREGAR ACOMPAÑANTE
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    // =========================================================================
+    // VISTA 1: DETALLE DEL RETIRO (CU 3 - CONSULTA DE TODOS LOS DATOS)
+    // =========================================================================
+    function DetalleView({ retreat, onOpenNewRetreat, onOpenActivity }) {
+      return (
+        <div className="space-y-4">
+          {/* Top Bar */}
+          <div className="flex items-center justify-between py-1">
+            <button onClick={onOpenNewRetreat} className="p-1 rounded-full hover:bg-black/5" title="Ir a nuevo retiro">
+              <IconArrowLeft />
+            </button>
+            <h2 className="text-xs font-semibold tracking-wide text-stone-800 uppercase">Detalle del Retiro</h2>
+            <button className="p-1 rounded-full hover:bg-black/5">
+              <IconShare />
+            </button>
+          </div>
+
+          {/* Hero Imagen con Badge */}
+          <div className="relative rounded-3xl overflow-hidden shadow-sm h-48 bg-stone-300">
+            <img 
+              src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80" 
+              alt="Deck del Retiro" 
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute top-3.5 left-3.5 bg-white/95 px-3 py-1 rounded-full flex items-center shadow-sm">
+              <span className="text-[10px] font-bold tracking-wider text-[#2D4B3E] uppercase">✓ {retreat.estado}</span>
+            </div>
+          </div>
+
+          {/* Título & Ubicación */}
+          <div>
+            <h1 className="font-serif text-[26px] leading-tight font-medium text-[#1C221E] tracking-tight">
+              {retreat.nombre}
+            </h1>
+            <div className="flex items-center gap-1.5 text-xs text-stone-600 mt-1">
+              <IconMapPin />
+              <span>{retreat.ubicacion}</span>
+            </div>
+          </div>
+
+          {/* Fechas & Duración */}
+          <div className="bg-white rounded-2xl p-4 border border-[#ECE9E1]">
+            <div className="grid grid-cols-2 gap-4 pb-3 border-b border-stone-100">
+              <div>
+                <span className="text-[9px] uppercase tracking-wider text-stone-400 font-bold block">INICIO</span>
+                <span className="text-xs font-bold text-stone-800 block mt-0.5">{retreat.fechaInicioDisplay}</span>
+                <span className="text-[10px] text-stone-500 block">Viernes · {retreat.horario}</span>
+              </div>
+              <div>
+                <span className="text-[9px] uppercase tracking-wider text-stone-400 font-bold block">FIN</span>
+                <span className="text-xs font-bold text-stone-800 block mt-0.5">{retreat.fechaFinDisplay}</span>
+                <span className="text-[10px] text-stone-500 block">Domingo · 18:00</span>
+              </div>
+            </div>
+            <div className="pt-2.5 flex items-center gap-1.5 text-xs text-stone-600">
+              <span>☀️</span>
+              <span className="font-medium">{retreat.duracion}</span>
+            </div>
+          </div>
+
+          {/* Descripción */}
+          <div className="bg-white rounded-2xl p-4 border border-[#ECE9E1]">
+            <div className="flex items-center gap-2 mb-2 text-stone-800 font-semibold text-xs">
+              <span>📄</span>
+              <span>Descripción</span>
+            </div>
+            <p className="text-xs text-stone-600 leading-relaxed">
+              {retreat.descripcion}
+            </p>
+          </div>
+
+          {/* Requisitos */}
+          <div className="bg-white rounded-2xl p-4 border border-[#ECE9E1]">
+            <div className="flex items-center gap-2 mb-2 text-stone-800 font-semibold text-xs">
+              <span>📋</span>
+              <span>Requisitos</span>
+            </div>
+            <ul className="text-xs text-stone-600 space-y-1.5">
+              {retreat.requisitos.split('\n').map((req, i) => (
+                <li key={i} className="flex items-start gap-1.5">
+                  <span className="text-stone-400">•</span>
+                  <span>{req.replace('•', '').trim()}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Organizador */}
+          <div className="bg-white rounded-2xl p-4 border border-[#ECE9E1]">
+            <div className="flex items-center gap-2 mb-3 text-stone-800 font-semibold text-xs">
+              <span>👤</span>
+              <span>Organizador</span>
+            </div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-[#EBF2ED] flex items-center justify-center text-[#2D4B3E]">
+                <IconLotus />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-stone-800">{retreat.organizador.nombre}</h4>
+                <p className="text-[11px] text-stone-500">{retreat.organizador.subtitulo}</p>
+              </div>
+            </div>
+            <p className="text-xs text-stone-600 mb-3">{retreat.organizador.telefono}</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#FAF9F5] border border-stone-200 text-xs font-semibold text-stone-700">
+                <IconPhone /> Llamar
+              </button>
+              <button className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#FAF9F5] border border-stone-200 text-xs font-semibold text-stone-700">
+                <IconMessage /> Mensaje
+              </button>
+            </div>
+          </div>
+
+          {/* Acompañantes Vinculados */}
+          <div className="bg-white rounded-2xl p-4 border border-[#ECE9E1]">
+            <div className="flex items-center gap-2 mb-3 text-stone-800 font-semibold text-xs">
+              <span>👥</span>
+              <span>Acompañantes Vinculados</span>
+            </div>
+            {retreat.acompanantes && retreat.acompanantes.length > 0 ? (
+              <div className="space-y-2.5">
+                {retreat.acompanantes.map((ac) => (
+                  <div key={ac.id} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#E8E1D3] text-[#4A4235] text-xs font-bold flex items-center justify-center">
+                      {ac.iniciales}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-stone-800">{ac.nombre} {ac.apellido}</p>
+                      <span className="text-[10px] text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full inline-block mt-0.5">
+                        {ac.relacion}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-stone-400 italic">Sin acompañantes (Opción seleccionada)</p>
+            )}
+          </div>
+
+          {/* Actividades */}
+          <div className="bg-white rounded-2xl p-4 border border-[#ECE9E1]">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-stone-800 font-semibold text-xs">📅 Actividades</span>
+            </div>
+            <p className="text-[11px] text-stone-500 mb-3">Tu agenda para estos tres días.</p>
+            
+            <div className="space-y-2.5">
+              {retreat.actividades.map((act) => (
+                <div key={act.id} className="flex items-start gap-3 p-2.5 rounded-xl bg-[#FAF9F5] border border-stone-100">
+                  <div className="bg-white border border-stone-200 rounded-lg px-2 py-1 text-center min-w-[40px]">
+                    <span className="text-xs font-bold text-stone-800 block leading-none">{act.dia}</span>
+                    <span className="text-[9px] font-bold text-stone-400 block uppercase">{act.mes}</span>
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-[10px] text-stone-400 block">{act.horario}</span>
+                    <h5 className="text-xs font-bold text-stone-800">{act.nombre}</h5>
+                    <p className="text-[10px] text-stone-500">{act.lugar} · <span className="font-medium text-[#2D4B3E]">{act.tipo}</span></p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button 
+              onClick={onOpenActivity}
+              className="mt-3 w-full py-2.5 border border-dashed border-[#2D4B3E]/40 text-[#2D4B3E] rounded-xl text-xs font-medium hover:bg-[#EBF2ED] transition text-center"
+            >
+              + Nueva Actividad
+            </button>
+          </div>
+
+          {/* Resumen de Pagos */}
+          <div className="bg-[#EBF2ED]/70 rounded-2xl p-4 border border-[#CADCCE]">
+            <div className="text-[#2D4B3E] font-semibold text-xs mb-2">💳 Resumen de pagos</div>
+            <div className="flex justify-between items-baseline mb-0.5">
+              <span className="text-xs text-stone-600">Costo Total</span>
+              <span className="font-serif text-xl font-bold text-[#1C221E]">${retreat.pagos.total.toLocaleString('es-AR')}</span>
+            </div>
+            <p className="text-[10px] text-stone-500 mb-3">{retreat.pagos.detalle}</p>
+
+            <div className="space-y-1.5 text-xs pb-3 border-b border-[#CADCCE]">
+              <div className="flex justify-between">
+                <span className="text-stone-600">Pagado</span>
+                <span className="font-semibold text-stone-800">${retreat.pagos.pagado.toLocaleString('es-AR')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-stone-600">Pendiente</span>
+                <span className="font-semibold text-stone-800">${retreat.pagos.pendiente.toLocaleString('es-AR')}</span>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-2 mb-3">
+              <span className="text-[11px] text-[#2D4B3E] font-medium underline cursor-pointer">Ver Historial ↗</span>
+            </div>
+
+            <button className="w-full py-2 bg-white border border-[#CADCCE] text-[#2D4B3E] rounded-xl text-xs font-bold hover:bg-stone-50 transition">
+              + Registrar Pago
+            </button>
+          </div>
+
+          {/* Mi Reseña */}
+          <div className="bg-white rounded-2xl p-4 border border-[#ECE9E1]">
+            <div className="text-stone-800 font-semibold text-xs mb-1.5">✍️ Mi reseña</div>
+            <div className="flex items-center gap-1 text-amber-500 mb-2">
+              {"★".repeat(retreat.resena.calificacion)}
+              {"☆".repeat(5 - retreat.resena.calificacion)}
+              <span className="text-xs text-stone-500 ml-1.5 font-medium">{retreat.resena.calificacion}/5</span>
+            </div>
+            <p className="text-xs text-stone-600 italic leading-relaxed mb-2 font-serif">
+              "{retreat.resena.texto}"
+            </p>
+            <p className="text-[10px] text-stone-400 font-sans">{retreat.resena.nota}</p>
+          </div>
+
+          {/* Botones de acción */}
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <button 
+              onClick={onOpenNewRetreat}
+              className="py-3 rounded-xl bg-[#2D4B3E] text-white text-xs font-bold uppercase tracking-wider shadow-md hover:bg-[#233C31] text-center"
+            >
+              ✎ Modificar
+            </button>
+            <button 
+              onClick={() => alert("Retiro dado de baja")}
+              className="py-3 rounded-xl bg-[#FBEBEB] text-[#B83E3E] text-xs font-bold uppercase tracking-wider text-center"
+            >
+              Dar de Baja
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // =========================================================================
+    // VISTA 2: REGISTRAR UN NUEVO RETIRO (CU 1)
+    // =========================================================================
+    function NuevoRetiroView({ retreat, onCancel, onSave, onOpenActivityModal, onOpenCompanionModal, onRemoveCompanion }) {
+      const [formData, setFormData] = useState({
+        nombre: retreat.nombre,
+        ubicacion: retreat.ubicacion,
+        fechaInicio: retreat.fechaInicio,
+        fechaFin: retreat.fechaFin,
+        horario: retreat.horario,
+        duracion: retreat.duracion,
+        descripcion: retreat.descripcion,
+        costo: retreat.costo,
+        estado: retreat.estado,
+        requisitos: retreat.requisitos,
+        organizadorNombre: retreat.organizador.nombre + " - " + retreat.organizador.subtitulo,
+        organizadorTelefono: retreat.organizador.telefono + "\n" + retreat.organizador.redes,
+        sinAcompanante: false
+      });
+
+      const [selectedActivities, setSelectedActivities] = useState([101, 102, 103]);
+
+      const actividadesDisponibles = [
+        { id: 101, nombre: "Círculo de bienvenida", horario: "17:00 - 18:00", costo: 0 },
+        { id: 102, nombre: "Yoga & meditación al amanecer", horario: "08:00 - 09:30", costo: 0 },
+        { id: 103, nombre: "Taller de Sonoterapia", horario: "18:00 - 19:30", costo: 15000 },
+        { id: 104, nombre: "Caminata consciente a las sierras", horario: "10:00 - 12:30", costo: 0 }
+      ];
+
+      const toggleActivity = (id) => {
+        setSelectedActivities(prev => 
+          prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
+        );
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave({
+          ...retreat,
+          nombre: formData.nombre,
+          ubicacion: formData.ubicacion,
+          fechaInicio: formData.fechaInicio,
+          fechaFin: formData.fechaFin,
+          horario: formData.horario,
+          duracion: formData.duracion,
+          descripcion: formData.descripcion,
+          costo: Number(formData.costo),
+          estado: formData.estado,
+          requisitos: formData.requisitos,
+          acompanantes: formData.sinAcompanante ? [] : retreat.acompanantes
+        });
+      };
+
+      return (
+        <div className="space-y-4">
+          {/* Top Bar */}
+          <div className="flex items-center justify-between py-1">
+            <button onClick={onCancel} className="p-1 rounded-full hover:bg-black/5">
+              <IconArrowLeft />
+            </button>
+            <h2 className="text-xs font-semibold tracking-wide text-stone-800 uppercase">Nuevo Retiro</h2>
+            <div className="w-5"></div>
+          </div>
+
+          {/* Banner Paso 2: Usuario logueado y fecha actual */}
+          <div className="bg-[#EBF2ED] border border-[#CADCCE] rounded-2xl p-3 flex items-center justify-between text-xs text-[#2D4B3E]">
+            <div><strong>Usuario:</strong> Clara Ríos</div>
+            <div className="text-[11px] text-[#486B5A]">📅 12/10/2026</div>
+          </div>
+
+          {/* Título de Cabecera */}
+          <div>
+            <div className="w-10 h-10 rounded-full bg-[#EBF2ED] flex items-center justify-center text-[#2D4B3E] mb-2">
+              <IconLotus />
+            </div>
+            <h1 className="font-serif text-[28px] font-medium text-[#1C221E] leading-tight">
+              Un espacio para reconectar
+            </h1>
+            <p className="text-xs text-stone-500 mt-1">
+              Reuní los detalles de tu próxima experiencia en un solo lugar.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+            
+            {/* Información General */}
+            <div className="space-y-3">
+              <div className="text-xs font-bold text-stone-800">🍃 Información general</div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-stone-600 mb-1">Nombre del retiro</label>
+                <input 
+                  type="text" 
+                  value={formData.nombre} 
+                  onChange={e => setFormData({...formData, nombre: e.target.value})} 
+                  required 
+                  className="w-full bg-white border border-[#DDD9CE] rounded-xl px-3.5 py-2.5 text-xs text-stone-900 focus:outline-none focus:border-[#2D4B3E]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-stone-600 mb-1">Ubicación</label>
+                <div className="relative flex items-center">
+                  <input 
+                    type="text" 
+                    value={formData.ubicacion} 
+                    onChange={e => setFormData({...formData, ubicacion: e.target.value})} 
+                    required 
+                    className="w-full bg-white border border-[#DDD9CE] rounded-xl pl-3.5 pr-8 py-2.5 text-xs text-stone-900 focus:outline-none focus:border-[#2D4B3E]"
+                  />
+                  <span className="absolute right-3 pointer-events-none"><IconMapPin /></span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-medium text-stone-600 mb-1">Fecha de inicio</label>
+                  <input 
+                    type="date" 
+                    value={formData.fechaInicio} 
+                    onChange={e => setFormData({...formData, fechaInicio: e.target.value})} 
+                    required 
+                    className="w-full bg-white border border-[#DDD9CE] rounded-xl px-2.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#2D4B3E]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-medium text-stone-600 mb-1">Fecha fin</label>
+                  <input 
+                    type="date" 
+                    value={formData.fechaFin} 
+                    onChange={e => setFormData({...formData, fechaFin: e.target.value})} 
+                    required 
+                    className="w-full bg-white border border-[#DDD9CE] rounded-xl px-2.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-[#2D4B3E]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-stone-600 mb-1">Horario</label>
+                <div className="relative flex items-center">
+                  <input 
+                    type="text" 
+                    value={formData.horario} 
+                    onChange={e => setFormData({...formData, horario: e.target.value})} 
+                    required 
+                    className="w-full bg-white border border-[#DDD9CE] rounded-xl pl-3.5 pr-8 py-2.5 text-xs text-stone-900 focus:outline-none focus:border-[#2D4B3E]"
+                  />
+                  <span className="absolute right-3 pointer-events-none"><IconClock /></span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-stone-600 mb-1">Duración</label>
+                <input 
+                  type="text" 
+                  value={formData.duracion} 
+                  onChange={e => setFormData({...formData, duracion: e.target.value})} 
+                  required 
+                  className="w-full bg-white border border-[#DDD9CE] rounded-xl px-3.5 py-2.5 text-xs text-stone-900 focus:outline-none focus:border-[#2D4B3E]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-stone-600 mb-1">Descripción</label>
+                <textarea 
+                  rows="3" 
+                  value={formData.descripcion} 
+                  onChange={e => setFormData({...formData, descripcion: e.target.value})} 
+                  required 
+                  className="w-full bg-white border border-[#DDD9CE] rounded-xl p-3 text-xs text-stone-900 leading-relaxed focus:outline-none focus:border-[#2D4B3E]"
+                ></textarea>
+              </div>
+            </div>
+
+            {/* Economía y Detalles */}
+            <div className="space-y-3 pt-2">
+              <div className="text-xs font-bold text-stone-800">💳 Economía y detalles</div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-stone-600 mb-1">Costo total ($)</label>
+                <input 
+                  type="number" 
+                  value={formData.costo} 
+                  onChange={e => setFormData({...formData, costo: e.target.value})} 
+                  required 
+                  className="w-full bg-white border border-[#DDD9CE] rounded-xl px-3.5 py-2.5 text-xs text-stone-900 focus:outline-none focus:border-[#2D4B3E]"
+                />
+                <p className="text-[10px] text-stone-400 mt-1">En pesos argentinos. Incluye sonoterapia ($15.000).</p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-stone-600 mb-1">Estado</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {['Interesado', 'Reservado', 'Pagado', 'Cancelado'].map((st) => (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setFormData({...formData, estado: st})}
+                      className={`py-2 px-3 rounded-xl text-xs font-medium border flex items-center justify-between transition ${
+                        formData.estado === st 
+                          ? 'bg-[#EBF2ED] border-[#2D4B3E] text-[#2D4B3E] font-bold shadow-sm' 
+                          : 'bg-white border-[#DDD9CE] text-stone-600'
+                      }`}
+                    >
+                      <span>{st}</span>
+                      {formData.estado === st && <IconCheck />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-stone-600 mb-1">Requisitos</label>
+                <textarea 
+                  rows="3" 
+                  value={formData.requisitos} 
+                  onChange={e => setFormData({...formData, requisitos: e.target.value})} 
+                  className="w-full bg-white border border-[#DDD9CE] rounded-xl p-3 text-xs text-stone-900 leading-relaxed focus:outline-none focus:border-[#2D4B3E]"
+                ></textarea>
+              </div>
+            </div>
+
+            {/* Organizador */}
+            <div className="space-y-3 pt-2">
+              <div className="text-xs font-bold text-stone-800">👤 Organizador</div>
+              <div>
+                <label className="block text-[11px] font-medium text-stone-600 mb-1">Nombre / Contacto</label>
+                <input 
+                  type="text" 
+                  value={formData.organizadorNombre} 
+                  onChange={e => setFormData({...formData, organizadorNombre: e.target.value})} 
+                  className="w-full bg-white border border-[#DDD9CE] rounded-xl px-3.5 py-2.5 text-xs text-stone-900"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-stone-600 mb-1">Teléfono / Redes</label>
+                <textarea 
+                  rows="2" 
+                  value={formData.organizadorTelefono} 
+                  onChange={e => setFormData({...formData, organizadorTelefono: e.target.value})} 
+                  className="w-full bg-white border border-[#DDD9CE] rounded-xl p-3 text-xs text-stone-900"
+                ></textarea>
+              </div>
+            </div>
+
+            {/* Acompañantes */}
+            <div className="space-y-3 pt-2">
+              <div className="text-xs font-bold text-stone-800">👥 Acompañantes</div>
+              <p className="text-[11px] text-stone-500">Las personas con quienes compartís el viaje.</p>
+
+              {/* Flujo Alternativo 8: Sin Acompañante */}
+              <label className="flex items-center gap-2 p-2.5 bg-stone-100 rounded-xl cursor-pointer text-xs text-stone-700">
+                <input 
+                  type="checkbox" 
+                  checked={formData.sinAcompanante} 
+                  onChange={e => setFormData({...formData, sinAcompanante: e.target.checked})} 
+                  className="rounded text-[#2D4B3E]"
+                />
+                <span className="font-medium">Seleccionar opción "Sin acompañante" (Flujo Alternativo 8)</span>
+              </label>
+
+              {!formData.sinAcompanante && (
+                <>
+                  <button 
+                    type="button" 
+                    onClick={onOpenCompanionModal}
+                    className="w-full py-2.5 bg-white border border-[#DDD9CE] rounded-xl text-xs font-bold text-stone-700 hover:bg-stone-50"
+                  >
+                    + Agregar Acompañante
+                  </button>
+
+                  <div className="space-y-2">
+                    {retreat.acompanantes.map((ac) => (
+                      <div key={ac.id} className="flex items-center justify-between p-2.5 bg-white border border-stone-200 rounded-xl">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-full bg-[#E8E1D3] text-[#4A4235] text-[10px] font-bold flex items-center justify-center">
+                            {ac.iniciales}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-stone-800 leading-tight">{ac.nombre} {ac.apellido}</p>
+                            <span className="text-[9px] text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded-full">{ac.relacion}</span>
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => onRemoveCompanion(ac.id)} className="p-1 text-stone-400 hover:text-red-500">
+                          <IconTrash />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Actividades del Retiro */}
+            <div className="space-y-3 pt-2">
+              <div className="text-xs font-bold text-stone-800">📅 Actividades asociadas</div>
+              <p className="text-[11px] text-stone-500">Selecciona las actividades predefinidas o agrega nuevas:</p>
+
+              <div className="space-y-2">
+                {actividadesDisponibles.map((act) => {
+                  const isChecked = selectedActivities.includes(act.id);
+                  return (
+                    <div 
+                      key={act.id} 
+                      onClick={() => toggleActivity(act.id)}
+                      className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition ${
+                        isChecked ? 'bg-[#EBF2ED] border-[#2D4B3E]' : 'bg-white border-stone-200'
+                      }`}
+                    >
+                      <div>
+                        <p className="text-xs font-bold text-stone-800">{act.nombre}</p>
+                        <p className="text-[10px] text-stone-500">{act.horario} · {act.costo > 0 ? `$${act.costo.toLocaleString('es-AR')}` : 'Incluido'}</p>
+                      </div>
+                      <input type="checkbox" checked={isChecked} readOnly className="rounded text-[#2D4B3E]" />
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Flujo Alternativo 6: Registrar Actividad */}
+              <button 
+                type="button" 
+                onClick={onOpenActivityModal}
+                className="w-full py-2.5 bg-[#FAF9F5] border border-dashed border-[#2D4B3E] text-[#2D4B3E] rounded-xl text-xs font-bold text-center"
+              >
+                + Registrar Nueva Actividad (CU: Registrar Actividad)
+              </button>
+            </div>
+
+            {/* Botones inferiores */}
+            <div className="pt-3 pb-2 space-y-2">
+              <button 
+                type="button" 
+                onClick={onCancel}
+                className="w-full py-2.5 rounded-xl border border-[#DDD9CE] bg-white text-xs font-medium text-stone-700"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit"
+                className="w-full py-3.5 rounded-xl bg-[#2D4B3E] text-white text-xs font-bold uppercase tracking-wider shadow-md hover:bg-[#233C31]"
+              >
+                GUARDAR RETIRO
+              </button>
+            </div>
+          </form>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

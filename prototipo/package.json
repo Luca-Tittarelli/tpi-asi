@@ -1,0 +1,10 @@
+{
+  "name": "prototipo-asi-retiros",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Prototipo de Casos de Uso - Grupo 14 ASI",
+  "scripts": {
+    "dev": "node dev.cjs",
+    "start": "node dev.cjs"
+  }
+}

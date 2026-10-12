@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Retiros · Prototipo ASI</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Newsreader', 'Georgia', 'serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            ink: '#1F2823',
+            muted: '#7C817B',
+            line: '#E9E6DD',
+            cream: '#F7F6F1',
+            moss: '#3D5A4B',
+            mossDark: '#31493C',
+            sage: '#E8EEE8',
+            sageLine: '#D6E0D6',
+          }
+        }
+      }
+    }
+  </script>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    html, body { background: #1B1B1B; }
+    body { font-family: 'Inter', system-ui, sans-serif; color: #1F2823; -webkit-font-smoothing: antialiased; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .field {
+      width: 100%; background: #fff; border: 1px solid #E6E3DA; border-radius: 8px;
+      padding: 10px 12px; font-size: 12px; color: #1F2823; outline: none;
+    }
+    .field:focus { border-color: #3D5A4B; }
+    textarea.field { line-height: 1.55; resize: none; }
+    .lbl { display: block; font-size: 11px; font-weight: 500; color: #3C443F; margin-bottom: 5px; }
+    .card { background: #fff; border-radius: 12px; border: 1px solid #EFECE4; padding: 14px; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // ---------- ICONOS (trazo estilo Lucide) ----------
+    const ICONS = {
+      back: ["M19 12H5", "m12 19-7-7 7-7"],
+      share: ["M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8", "m16 6-4-4-4 4", "M12 2v13"],
+      x: ["M18 6 6 18", "m6 6 12 12"],
+      pin: ["M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z", "M12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"],
+      calendar: ["M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z", "M16 2v4", "M8 2v4", "M3 10h18"],
+      calcheck: ["M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z", "M16 2v4", "M8 2v4", "M3 10h18", "m9 16 2 2 4-4"],
+      clock: ["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z", "M12 6v6l4 2"],
+      phone: ["M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"],
+      msg: ["M7.9 20A9 9 0 1 0 4 16.1L2 22Z"],
+      users: ["M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2", "M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z", "M22 21v-2a4 4 0 0 0-3-3.87", "M16 3.13a4 4 0 0 1 0 7.75"],
+      trash: ["M3 6h18", "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6", "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2", "M10 11v6", "M14 11v6"],
+      file: ["M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z", "M14 2v6h6", "M16 13H8", "M16 17H8", "M10 9H8"],
+      list: ["M8 2h8v4H8z", "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2", "M12 11h4", "M12 16h4", "M8 11h.01", "M8 16h.01"],
+      sprout: ["M7 20h10", "M10 20c5.5-2.5.8-6.4 3-10", "M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z", "M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"],
+      wallet: ["M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1", "M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"],
+      pen: ["M12 20h9", "M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"],
+      sun: ["M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z", "M12 2v2", "M12 20v2", "m4.93 4.93 1.41 1.41", "m17.66 17.66 1.41 1.41", "M2 12h2", "M20 12h2", "m6.34 17.66-1.41 1.41", "m19.07 4.93-1.41 1.41"],
+      ext: ["M7 17 17 7", "M7 7h10v10"],
+      check: ["M20 6 9 17l-5-5"],
+    };
+    const Icon = ({ n, s = 16, c = "currentColor", w = 1.8, className = "" }) => (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={w}
+           strokeLinecap="round" strokeLinejoin="round" className={className} style={{ flexShrink: 0 }}>
+        {ICONS[n].map((d, i) => <path key={i} d={d} />)}
+      </svg>
+    );
+
+    const Star = ({ filled }) => (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill={filled ? "#B8914A" : "none"} stroke="#B8914A" strokeWidth="1.5" strokeLinejoin="round">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+      </svg>
+    );
+
+    // ---------- PIEZAS DE UI ----------
+    const StatusBar = () => (
+      <div className="flex items-center justify-between px-6 pt-3 pb-1 text-[12px] font-semibold text-ink">
+        <span>9:41</span>
+        <span className="flex items-center gap-1.5">
+          <svg width="16" height="10" viewBox="0 0 16 10" fill="#1F2823"><rect x="0" y="6" width="3" height="4" rx=".7"/><rect x="4" y="4" width="3" height="6" rx=".7"/><rect x="8" y="2" width="3" height="8" rx=".7"/><rect x="12" y="0" width="3" height="10" rx=".7"/></svg>
+          <svg width="14" height="10" viewBox="0 0 24 18" fill="none" stroke="#1F2823" strokeWidth="2.6" strokeLinecap="round"><path d="M2 6a15 15 0 0 1 20 0"/><path d="M6 10.5a9 9 0 0 1 12 0"/><circle cx="12" cy="15" r="1.4" fill="#1F2823"/></svg>
+          <svg width="22" height="10" viewBox="0 0 26 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3" stroke="#1F2823" opacity=".5"/><rect x="2" y="2" width="16" height="8" rx="1.8" fill="#1F2823"/><rect x="23" y="4" width="2" height="4" rx="1" fill="#1F2823" opacity=".5"/></svg>
+        </span>
+      </div>
+    );
+
+    const HomeBar = () => (
+      <div className="flex justify-center pb-2 pt-1"><div className="w-[120px] h-[4px] rounded-full bg-[#1F2823]" /></div>
+    );
+
+    const TopBar = ({ title, onBack, right }) => (
+      <div className="flex items-center justify-between px-5 pt-3 pb-3">
+        <button type="button" onClick={onBack} className="w-6 h-6 flex items-center text-ink"><Icon n="back" s={18} /></button>
+        <h2 className="text-[13px] font-medium text-ink">{title}</h2>
+        <div className="w-6 h-6 flex items-center justify-end text-ink">{right}</div>
+      </div>
+    );
+
+    const SectionTitle = ({ icon, children }) => (
+      <div className="flex items-center gap-2 text-[13px] font-semibold text-ink font-serif mb-2.5" style={{ fontSize: 15 }}>
+        <Icon n={icon} s={15} c="#3D5A4B" /> {children}
+      </div>
+    );
+
+    const Phone = ({ children, className = "", style }) => (
+      <div className={`relative w-[390px] max-w-full bg-cream rounded-[28px] overflow-hidden flex flex-col shadow-2xl ${className}`} style={style}>
+        {children}
+      </div>
+    );
+
+    const Avatar = ({ text, size = 36 }) => (
+      <div className="rounded-full bg-[#E9E3D2] text-[#5A4F38] font-semibold flex items-center justify-center"
+           style={{ width: size, height: size, fontSize: size > 32 ? 11 : 10 }}>{text}</div>
+    );
+    const Tag = ({ children }) => (
+      <span className="inline-block text-[9px] text-[#5D6A62] bg-[#E7ECE6] px-2 py-[2px] rounded-full mt-0.5">{children}</span>
+    );
+
+    const fmtMoney = (n) => "$" + Number(n).toLocaleString('es-AR');
+    const MONTHS = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic."];
+    const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const parseDMY = (s) => {
+      const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s.trim());
+      return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
+    };
+    const dispDate = (s, fallback) => {
+      const d = parseDMY(s);
+      return d ? `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}` : fallback;
+    };
+    const dayName = (s, fallback) => { const d = parseDMY(s); return d ? DAYS[d.getDay()] : fallback; };
+
+    // ---------- DATOS ----------
+    const initialRetreat = {
+      nombre: "Retiro de Yoga & Meditación",
+      ubicacion: "Capilla del Monte, Córdoba",
+      fechaInicio: "20/11/2026",
+      fechaFin: "22/11/2026",
+      horario: "16:00",
+      duracion: "3 días · 2 noches",
+      descripcion: "Tres días para bajar el ritmo y reconectar con vos. Yoga suave, meditación y caminatas en las sierras, con alojamiento y alimentación vegetariana incluidos.",
+      costo: 185000,
+      estado: "Reservado",
+      requisitos: "Traer mat, ropa cómoda y abrigo.\nInformar alergias o restricciones alimentarias.\nNo se necesita experiencia previa.",
+      organizadorNombre: "Clara Ríos · Espacio Raíz",
+      organizadorTelefono: "+54 9 351 612 4080\n@espacio.raiz",
+      acompanantes: [
+        { id: 1, nombre: "Lucía", apellido: "Martínez", relacion: "Hermana", iniciales: "LM" },
+        { id: 2, nombre: "Tomás", apellido: "Vega", relacion: "Pareja", iniciales: "TV" },
+      ],
+      actividades: [
+        { id: 101, dia: "20", mes: "NOV", horario: "17:00 - 18:00", nombre: "Círculo de bienvenida", lugar: "Salón principal", costo: 0 },
+        { id: 102, dia: "21", mes: "NOV", horario: "08:00 - 09:30", nombre: "Yoga & meditación", lugar: "Deck al aire libre", costo: 0 },
+        { id: 103, dia: "21", mes: "NOV", horario: "18:00 - 19:30", nombre: "Taller de Sonoterapia", lugar: "Salón principal", costo: 15000 },
+      ],
+      pagos: { pagado: 90000, detalle: "Retiro $170.000 + sonoterapia $15.000" },
+      resena: {
+        calificacion: 4,
+        texto: "En mi visita anterior, la calidez de Clara y la meditación al amanecer fueron lo mejor. Me gustaría tener más tiempo libre entre talleres.",
+        nota: "Nota personal · Experiencia de 2025",
+      },
+    };
+
+    // ==================================================================
+    // APP: tres pantallas lado a lado
+    // ==================================================================
+    function App() {
+      const [retreat, setRetreat] = useState(initialRetreat);
+      const [toast, setToast] = useState(null);
+      const [actKey, setActKey] = useState(0);
+      const [showCompanion, setShowCompanion] = useState(false);
+
+      const notify = (m) => { setToast(m); setTimeout(() => setToast(null), 2600); };
+
+      const saveActivity = (a) => {
+        const costo = Number(a.costo) || 0;
+        const d = parseDMY(a.fecha);
+        setRetreat(p => ({
+          ...p,
+          costo: p.costo + costo,
+          pagos: { ...p.pagos, detalle: costo ? `${p.pagos.detalle} + ${a.nombre} ${fmtMoney(costo)}` : p.pagos.detalle },
+          actividades: [...p.actividades, {
+            id: Date.now(),
+            dia: d ? String(d.getDate()) : "21",
+            mes: d ? MONTHS[d.getMonth()].replace(".", "").toUpperCase() : "NOV",
+            horario: a.hora || "18:00",
+            nombre: a.nombre,
+            lugar: "Salón principal",
+            costo,
+          }],
+        }));
+        setActKey(k => k + 1);
+        notify("✓ Actividad registrada");
+      };
+
+      const saveRetreat = (f) => {
+        setRetreat(p => ({ ...p, ...f }));
+        notify("✓ Retiro guardado");
+      };
+
+      const addCompanion = (c) => {
+        const ini = `${(c.nombre || 'A')[0]}${(c.apellido || 'C')[0]}`.toUpperCase();
+        setRetreat(p => ({ ...p, acompanantes: [...p.acompanantes, { id: Date.now(), nombre: c.nombre, apellido: c.apellido, relacion: c.relacion, iniciales: ini }] }));
+        setShowCompanion(false);
+        notify("✓ Acompañante añadido");
+      };
+      const removeCompanion = (id) => setRetreat(p => ({ ...p, acompanantes: p.acompanantes.filter(c => c.id !== id) }));
+
+      const [view, setView] = useState('detail');
+      const [showActivity, setShowActivity] = useState(false);
+      const goto = (v) => { setShowActivity(false); setShowCompanion(false); setView(v); };
+      const tabs = [
+        { id: 'detail', label: 'Detalle del Retiro' },
+        { id: 'create', label: 'Nuevo Retiro' },
+        { id: 'activity', label: 'Nueva Actividad' },
+      ];
+      const current = showActivity ? 'activity' : view;
+
+      return (
+        <div className="min-h-screen p-4 flex flex-col items-center justify-center gap-4">
+          {toast && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-moss text-white px-4 py-2 rounded-full text-xs font-semibold shadow-xl">{toast}</div>
+          )}
+
+          <div className="flex gap-1 p-1 rounded-full bg-[#2A2A2A]">
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => t.id === 'activity' ? (setView('detail'), setShowCompanion(false), setShowActivity(true)) : goto(t.id)}
+                className={`px-4 py-1.5 rounded-full text-[12px] font-medium transition ${current === t.id ? 'bg-cream text-ink' : 'text-[#A9ADA8] hover:text-white'}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          <Phone style={{ height: 844, maxHeight: '90vh' }}>
+            <div className="flex-1 flex flex-col overflow-y-auto hide-scrollbar">
+              {view === 'detail' ? (
+                <DetailView retreat={retreat} onEdit={() => goto('create')} onBack={() => goto('create')}
+                  onNewActivity={() => setShowActivity(true)} />
+              ) : (
+                <NewRetreatView retreat={retreat} onBack={() => goto('detail')}
+                  onSave={(f) => { saveRetreat(f); goto('detail'); }}
+                  onAddCompanion={() => setShowCompanion(true)} onRemoveCompanion={removeCompanion} />
+              )}
+            </div>
+            {showActivity && (
+              <div className="absolute inset-0 z-40 bg-[#1F2823]/40" onClick={() => setShowActivity(false)}>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <ActivitySheet key={actKey} retreat={retreat}
+                    onSave={(a) => { saveActivity(a); setShowActivity(false); }}
+                    onCancel={() => { setShowActivity(false); setActKey(k => k + 1); }} />
+                </div>
+              </div>
+            )}
+            {showCompanion && <CompanionSheet onClose={() => setShowCompanion(false)} onSave={addCompanion} />}
+          </Phone>
+        </div>
+      );
+    }
+
+
+    // ==================================================================
+    // BOTTOM SHEET: NUEVA ACTIVIDAD
+    // ==================================================================
+    function ActivitySheet({ retreat, onSave, onCancel }) {
+      const [f, setF] = useState({ nombre: "Taller de Sonoterapia", fecha: "21/11/2026", hora: "18:00", costo: "15000",
+        descripcion: "Un viaje sonoro con cuencos tibetanos para relajar el cuerpo y aquietar la mente. Incluye todos los materiales." });
+      const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+      return (
+        <form onSubmit={(e) => { e.preventDefault(); onSave(f); }}
+              className="absolute left-0 right-0 bottom-0 bg-cream rounded-t-[24px] px-5 pt-5 pb-2 shadow-[0_-8px_30px_rgba(0,0,0,0.15)]">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h2 className="font-serif text-[22px] font-medium text-ink leading-tight">Nueva Actividad</h2>
+              <p className="text-[11px] text-muted mt-0.5">Retiro: {retreat.nombre}</p>
+            </div>
+            <button type="button" onClick={onCancel} className="w-6 h-6 rounded-full bg-[#E6EBE5] text-moss flex items-center justify-center"><Icon n="x" s={12} w={2.2} /></button>
+          </div>
+
+          <div className="space-y-3">
+            <div><label className="lbl">Nombre de la actividad</label>
+              <input className="field" value={f.nombre} onChange={set('nombre')} required /></div>
+            <div className="grid grid-cols-[1.3fr_1fr] gap-3">
+              <div><label className="lbl">Fecha</label>
+                <div className="relative"><input className="field pr-9" value={f.fecha} onChange={set('fecha')} /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5B635E]"><Icon n="calendar" s={14} /></span></div></div>
+              <div><label className="lbl">Hora</label>
+                <div className="relative"><input className="field pr-9" value={f.hora} onChange={set('hora')} /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5B635E]"><Icon n="clock" s={14} /></span></div></div>
+            </div>
+            <div><label className="lbl">Costo Adicional ($) <span className="text-muted font-normal">(Opcional)</span></label>
+              <input className="field" value={f.costo} onChange={set('costo')} inputMode="numeric" /></div>
+            <div><label className="lbl">Descripción de la actividad</label>
+              <textarea className="field" rows="4" value={f.descripcion} onChange={set('descripcion')} /></div>
+          </div>
+
+          <div className="mt-5 space-y-2.5">
+            <button type="button" onClick={onCancel} className="w-full py-2.5 rounded-lg border border-line bg-white text-[12px] font-medium text-ink">Cancelar</button>
+            <button type="submit" className="w-full py-3 rounded-lg bg-moss text-white text-[11px] font-semibold tracking-[0.12em] uppercase hover:bg-mossDark">GUARDAR ACTIVIDAD</button>
+          </div>
+          <div className="pt-3"><HomeBar /></div>
+        </form>
+      );
+    }
+
+    // ==================================================================
+    // DETALLE DEL RETIRO
+    // ==================================================================
+    function DetailView({ retreat, onEdit, onBack, onNewActivity }) {
+      const total = retreat.costo;
+      const pagado = retreat.pagos.pagado;
+      const pendiente = Math.max(total - pagado, 0);
+      const pct = Math.min(100, Math.round((pagado / total) * 100));
+      const reqs = retreat.requisitos.split('\n').filter(Boolean);
+      const [phoneLine, handle] = retreat.organizadorTelefono.split('\n');
+      const [orgName, orgSub] = retreat.organizadorNombre.split(' · ');
+
+      return (
+        <>
+          <StatusBar />
+          <TopBar title="Detalle del Retiro" right={<Icon n="share" s={17} />} />
+
+          <div className="px-4 space-y-3 pb-4">
+            <div className="relative rounded-xl overflow-hidden h-[172px] bg-stone-300">
+              <img alt="Retiro" className="w-full h-full object-cover"
+                   src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=900&q=80" />
+              <div className="absolute top-3 left-3 bg-white/95 px-2.5 py-1 rounded-full flex items-center gap-1 text-[9px] font-semibold tracking-wider text-moss uppercase shadow-sm">
+                <Icon n="check" s={10} w={2.6} /> {retreat.estado}
+              </div>
+            </div>
+
+            <div className="px-1 pt-1">
+              <h1 className="font-serif text-[28px] leading-[1.1] text-ink font-medium">{retreat.nombre}</h1>
+              <div className="flex items-center gap-1.5 text-[12px] text-muted mt-2"><Icon n="pin" s={13} /> {retreat.ubicacion}</div>
+            </div>
+
+            <div className="card !py-3">
+              <div className="grid grid-cols-2 pb-3 border-b border-line">
+                <div className="pr-3 border-r border-line">
+                  <div className="text-[8px] tracking-[0.14em] text-muted font-semibold">INICIO</div>
+                  <div className="text-[13px] font-bold text-ink mt-0.5">{dispDate(retreat.fechaInicio, retreat.fechaInicio)}</div>
+                  <div className="text-[10px] text-muted">{dayName(retreat.fechaInicio, "Viernes")} · {retreat.horario}</div>
+                </div>
+                <div className="pl-4">
+                  <div className="text-[8px] tracking-[0.14em] text-muted font-semibold">FIN</div>
+                  <div className="text-[13px] font-bold text-ink mt-0.5">{dispDate(retreat.fechaFin, retreat.fechaFin)}</div>
+                  <div className="text-[10px] text-muted">{dayName(retreat.fechaFin, "Domingo")} · 18:00</div>
+                </div>
+              </div>
+              <div className="pt-2.5 flex items-center gap-2 text-[11px] text-ink"><Icon n="sun" s={13} /> {retreat.duracion}</div>
+            </div>
+
+            <div className="card">
+              <SectionTitle icon="file">Descripción</SectionTitle>
+              <p className="text-[12px] leading-[1.65] text-[#4B534E]">{retreat.descripcion}</p>
+            </div>
+
+            <div className="card">
+              <SectionTitle icon="list">Requisitos</SectionTitle>
+              <ul className="space-y-2">
+                {reqs.map((r, i) => (
+                  <li key={i} className="flex items-start gap-2 text-[12px] text-[#4B534E]"><span className="text-muted">•</span><span>{r.replace('•', '').trim()}</span></li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="card">
+              <SectionTitle icon="users">Organizador</SectionTitle>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-sage flex items-center justify-center text-moss"><Icon n="sprout" s={18} /></div>
+                <div>
+                  <div className="text-[13px] font-semibold text-ink">{orgName}</div>
+                  <div className="text-[11px] text-muted">{orgSub} · {handle}</div>
+                </div>
+              </div>
+              <div className="text-[12px] text-ink mt-3">{phoneLine}</div>
+              <div className="grid grid-cols-2 gap-2.5 mt-3">
+                <button className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-line bg-white text-[12px] font-medium text-moss"><Icon n="phone" s={14} /> Llamar</button>
+                <button className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-sage text-[12px] font-medium text-moss"><Icon n="msg" s={14} /> Mensaje</button>
+              </div>
+            </div>
+
+            <div className="card">
+              <SectionTitle icon="users">Acompañantes Vinculados</SectionTitle>
+              <div className="space-y-3.5">
+                {retreat.acompanantes.length === 0 && <p className="text-[12px] text-muted italic">Sin acompañantes</p>}
+                {retreat.acompanantes.map(a => (
+                  <div key={a.id} className="flex items-center gap-3">
+                    <Avatar text={a.iniciales} size={38} />
+                    <div><div className="text-[12.5px] font-semibold text-ink leading-tight">{a.nombre} {a.apellido}</div><Tag>{a.relacion}</Tag></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="card">
+              <SectionTitle icon="calcheck">Actividades</SectionTitle>
+              <p className="text-[11px] text-muted -mt-1.5 mb-3">Tu agenda para estos tres días.</p>
+              <div className="space-y-2.5">
+                {retreat.actividades.map(a => (
+                  <div key={a.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-cream">
+                    <div className="bg-white border border-line rounded-md w-[38px] py-1 text-center">
+                      <div className="font-serif text-[15px] font-semibold text-ink leading-none">{a.dia}</div>
+                      <div className="text-[8px] font-semibold text-muted tracking-wider mt-0.5">{a.mes}</div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[9.5px] text-muted">{a.horario}</div>
+                      <div className="text-[12.5px] font-semibold text-ink leading-tight">{a.nombre}</div>
+                      <div className="text-[10px] text-muted">{a.lugar} · {a.costo > 0 ? `Adicional ${fmtMoney(a.costo)}` : "Incluido"}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button type="button" onClick={onNewActivity} className="mt-3 w-full py-2.5 rounded-lg border border-line bg-white text-[12px] font-medium text-moss">+ Nueva Actividad</button>
+            </div>
+
+            <div className="rounded-xl p-4 bg-[#EAF0E8] border border-[#DCE5D9]">
+              <SectionTitle icon="wallet">Resumen de pagos</SectionTitle>
+              <div className="flex justify-between items-baseline">
+                <span className="text-[12px] text-[#4B534E]">Costo Total</span>
+                <span className="font-serif text-[24px] font-semibold text-ink">{fmtMoney(total)}</span>
+              </div>
+              <p className="text-[9.5px] text-muted mb-2.5">{retreat.pagos.detalle}</p>
+              <div className="h-[5px] rounded-full bg-[#D5DFD2] overflow-hidden"><div className="h-full bg-moss rounded-full" style={{ width: pct + '%' }} /></div>
+              <div className="space-y-2 mt-3 text-[12px]">
+                <div className="flex justify-between"><span className="text-[#4B534E]">Pagado</span><span className="font-semibold text-ink">{fmtMoney(pagado)}</span></div>
+                <div className="flex justify-between"><span className="text-[#4B534E]">Pendiente</span><span className="font-semibold text-ink">{fmtMoney(pendiente)}</span></div>
+              </div>
+              <div className="flex justify-between items-center text-[11px] font-medium text-moss mt-3 pt-3 border-t border-[#D5DFD2]">
+                <span>Ver Historial</span><Icon n="ext" s={12} />
+              </div>
+              <button className="mt-3 w-full py-2.5 rounded-lg bg-white border border-[#DCE5D9] text-[12px] font-medium text-moss">+ Registrar Pago</button>
+            </div>
+
+            <div className="card">
+              <SectionTitle icon="pen">Mi reseña</SectionTitle>
+              <div className="flex items-center gap-0.5 mb-2">
+                {[1,2,3,4,5].map(i => <Star key={i} filled={i <= retreat.resena.calificacion} />)}
+                <span className="text-[11px] text-muted ml-2">{retreat.resena.calificacion}/5</span>
+              </div>
+              <p className="font-serif italic text-[12.5px] leading-[1.6] text-[#4B534E]">“{retreat.resena.texto}”</p>
+              <p className="text-[10px] text-muted mt-2">{retreat.resena.nota}</p>
+            </div>
+          </div>
+
+          <div className="mt-auto sticky bottom-0 px-4 pt-3 pb-1 bg-cream border-t border-line">
+            <div className="grid grid-cols-[1fr_1fr] gap-2.5">
+              <button onClick={onEdit} className="flex items-center justify-center gap-2 py-3 rounded-lg bg-moss text-white text-[12px] font-medium"><Icon n="pen" s={13} /> Modificar</button>
+              <button className="py-3 rounded-lg bg-[#FBEDEA] text-[#B4413A] text-[12px] font-medium">Dar de Baja</button>
+            </div>
+            <div className="pt-3"><HomeBar /></div>
+          </div>
+        </>
+      );
+    }
+
+    // ==================================================================
+    // NUEVO RETIRO
+    // ==================================================================
+    function NewRetreatView({ retreat, onBack, onSave, onAddCompanion, onRemoveCompanion }) {
+      const [f, setF] = useState({
+        nombre: retreat.nombre, ubicacion: retreat.ubicacion, fechaInicio: retreat.fechaInicio, fechaFin: retreat.fechaFin,
+        horario: retreat.horario, duracion: retreat.duracion, descripcion: retreat.descripcion, costo: String(retreat.costo),
+        estado: retreat.estado, requisitos: retreat.requisitos, organizadorNombre: retreat.organizadorNombre.replace(' · ', ' - '),
+        organizadorTelefono: retreat.organizadorTelefono,
+      });
+      const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+      const submit = (e) => {
+        e.preventDefault();
+        onSave({ ...f, costo: Number(f.costo) || 0, organizadorNombre: f.organizadorNombre.replace(' - ', ' · ') });
+      };
+      const Divider = () => <div className="h-px bg-line -mx-5" />;
+      const Head = ({ icon, children }) => (
+        <div className="flex items-center gap-2 font-serif text-[16px] font-medium text-ink mb-3"><Icon n={icon} s={15} c="#3D5A4B" /> {children}</div>
+      );
+      const Wrap = ({ icon, area, onChange, value, rows }) => (
+        <div className="relative">
+          {area ? <textarea className="field" rows={rows} value={value} onChange={onChange} />
+                : <input className="field pr-9" value={value} onChange={onChange} />}
+          {icon && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5B635E]"><Icon n={icon} s={14} /></span>}
+        </div>
+      );
+
+      return (
+        <form onSubmit={submit} className="flex flex-col flex-1 min-h-0">
+          <StatusBar />
+          <TopBar title="Nuevo Retiro" onBack={onBack} />
+
+          <div className="px-5 pt-2 pb-5 space-y-5">
+            <div>
+              <div className="w-9 h-9 rounded-full bg-sage flex items-center justify-center text-moss mb-3"><Icon n="sprout" s={17} /></div>
+              <h1 className="font-serif text-[27px] leading-tight text-ink font-medium">Un espacio para reconectar</h1>
+              <p className="text-[11px] text-muted mt-1.5">Reuní los detalles de tu próxima experiencia en un solo lugar.</p>
+            </div>
+
+            <Divider />
+
+            <div className="space-y-3">
+              <Head icon="sprout">Información general</Head>
+              <div><label className="lbl">Nombre del retiro</label><Wrap value={f.nombre} onChange={set('nombre')} /></div>
+              <div><label className="lbl">Ubicación</label><Wrap icon="pin" value={f.ubicacion} onChange={set('ubicacion')} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="lbl">Fecha de inicio</label><Wrap icon="calendar" value={f.fechaInicio} onChange={set('fechaInicio')} /></div>
+                <div><label className="lbl">Fecha fin</label><Wrap icon="calendar" value={f.fechaFin} onChange={set('fechaFin')} /></div>
+              </div>
+              <div><label className="lbl">Horario</label><Wrap icon="clock" value={f.horario} onChange={set('horario')} /></div>
+              <div><label className="lbl">Duración</label><Wrap value={f.duracion} onChange={set('duracion')} /></div>
+              <div><label className="lbl">Descripción</label><Wrap area rows={5} value={f.descripcion} onChange={set('descripcion')} /></div>
+            </div>
+
+            <Divider />
+
+            <div className="space-y-3">
+              <Head icon="wallet">Economía y detalles</Head>
+              <div><label className="lbl">Costo total ($)</label>
+                <Wrap value={f.costo} onChange={set('costo')} />
+                <p className="text-[9.5px] text-muted mt-1.5">En pesos argentinos. Incluye sonoterapia ($15.000).</p></div>
+              <div>
+                <label className="lbl">Estado</label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {['Interesado', 'Reservado', 'Pagado', 'Cancelado'].map(s => {
+                    const on = f.estado === s;
+                    return (
+                      <button type="button" key={s} onClick={() => setF({ ...f, estado: s })}
+                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-[12px] ${on ? 'bg-sage border-moss text-moss font-medium' : 'bg-white border-line text-[#4B534E]'}`}>
+                        <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${on ? 'border-moss' : 'border-[#C9CCC6]'}`}>
+                          {on && <span className="w-2 h-2 rounded-full bg-moss" />}
+                        </span>{s}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div><label className="lbl">Requisitos</label><Wrap area rows={4} value={f.requisitos} onChange={set('requisitos')} /></div>
+            </div>
+
+            <Divider />
+
+            <div className="space-y-3">
+              <Head icon="sprout">Organizador</Head>
+              <div><label className="lbl">Nombre / Contacto</label><Wrap value={f.organizadorNombre} onChange={set('organizadorNombre')} /></div>
+              <div><label className="lbl">Teléfono / Redes</label><Wrap area rows={2} value={f.organizadorTelefono} onChange={set('organizadorTelefono')} /></div>
+            </div>
+
+            <Divider />
+
+            <div className="space-y-3">
+              <Head icon="users">Acompañantes</Head>
+              <p className="text-[10.5px] text-muted -mt-2">Las personas con quienes compartís el viaje.</p>
+              <button type="button" onClick={onAddCompanion} className="w-full py-2.5 bg-white border border-line rounded-lg text-[12px] font-medium text-ink">+ Agregar Acompañante</button>
+              <div className="space-y-2.5">
+                {retreat.acompanantes.map(a => (
+                  <div key={a.id} className="flex items-center justify-between p-2.5 bg-white border border-line rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Avatar text={a.iniciales} size={34} />
+                      <div><div className="text-[12px] font-semibold text-ink leading-tight">{a.nombre} {a.apellido}</div><Tag>{a.relacion}</Tag></div>
+                    </div>
+                    <button type="button" onClick={() => onRemoveCompanion(a.id)} className="text-muted hover:text-red-500 p-1"><Icon n="trash" s={14} /></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-auto sticky bottom-0 bg-cream border-t border-line px-5 pt-3 pb-1">
+            <div className="grid grid-cols-[1fr_1.7fr] gap-2.5">
+              <button type="button" onClick={onBack} className="py-3 rounded-lg border border-line bg-white text-[12px] font-medium text-ink">Cancelar</button>
+              <button type="submit" className="py-3 rounded-lg bg-moss text-white text-[11px] font-semibold tracking-[0.12em] uppercase hover:bg-mossDark">GUARDAR RETIRO</button>
+            </div>
+            <div className="pt-3"><HomeBar /></div>
+          </div>
+        </form>
+      );
+    }
+
+    // ---------- Sheet: Nuevo acompañante ----------
+    function CompanionSheet({ onClose, onSave }) {
+      const [c, setC] = useState({ nombre: "", apellido: "", relacion: "Amigo/a" });
+      const set = (k) => (e) => setC({ ...c, [k]: e.target.value });
+      return (
+        <div className="absolute inset-0 z-40 bg-[#1F2823]/40 flex flex-col justify-end">
+          <form onSubmit={(e) => { e.preventDefault(); onSave(c); }} className="bg-cream rounded-t-[24px] px-5 pt-5 pb-3 space-y-3">
+            <div className="flex justify-between items-start mb-1">
+              <div><h2 className="font-serif text-[22px] font-medium text-ink">Nuevo Acompañante</h2>
+                <p className="text-[11px] text-muted">Registrar persona para el viaje</p></div>
+              <button type="button" onClick={onClose} className="w-6 h-6 rounded-full bg-[#E6EBE5] text-moss flex items-center justify-center"><Icon n="x" s={12} w={2.2} /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="lbl">Nombre</label><input className="field" required placeholder="Sofía" value={c.nombre} onChange={set('nombre')} /></div>
+              <div><label className="lbl">Apellido</label><input className="field" required placeholder="Gómez" value={c.apellido} onChange={set('apellido')} /></div>
+            </div>
+            <div><label className="lbl">Relación</label>
+              <select className="field" value={c.relacion} onChange={set('relacion')}>
+                {['Hermana', 'Pareja', 'Amigo/a', 'Familiar'].map(r => <option key={r}>{r}</option>)}
+              </select></div>
+            <button type="button" onClick={onClose} className="w-full py-2.5 rounded-lg border border-line bg-white text-[12px] font-medium">Cancelar</button>
+            <button type="submit" className="w-full py-3 rounded-lg bg-moss text-white text-[11px] font-semibold tracking-[0.12em] uppercase">AGREGAR ACOMPAÑANTE</button>
+            <HomeBar />
+          </form>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
