@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Gestión de Retiros · Prototipo ASI</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,9 +38,18 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
-    html, body { background: #1B1B1B; }
-    body { font-family: 'Inter', system-ui, sans-serif; color: #1F2823; -webkit-font-smoothing: antialiased; }
+    html, body {
+      background: #1B1B1B;
+      min-height: 100%;
+      height: 100%;
+    }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      color: #1F2823;
+      -webkit-font-smoothing: antialiased;
+    }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .field {
       width: 100%; background: #fff; border: 1px solid #E6E3DA; border-radius: 8px;
       padding: 10px 12px; font-size: 12px; color: #1F2823; outline: none;
@@ -54,6 +63,13 @@
       cursor: not-allowed !important;
       position: relative;
       filter: grayscale(0.25);
+    }
+    /* Soporte Safe Area para iOS Safari / Chrome */
+    .pb-safe {
+      padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+    }
+    .safe-bottom-pad {
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
     }
   </style>
 </head>
@@ -111,7 +127,7 @@
     );
 
     const HomeBar = () => (
-      <div className="flex justify-center pb-2 pt-1"><div className="w-[120px] h-[4px] rounded-full bg-[#1F2823]" /></div>
+      <div className="hidden sm:flex justify-center pb-2 pt-1"><div className="w-[120px] h-[4px] rounded-full bg-[#1F2823]" /></div>
     );
 
     const TopBar = ({ title, onBack, right }) => (
@@ -129,7 +145,7 @@
     );
 
     const Phone = ({ children, className = "", style }) => (
-      <div className={`relative w-[390px] max-w-full bg-cream rounded-[28px] overflow-hidden flex flex-col shadow-2xl ${className}`} style={style}>
+      <div className={`relative w-full sm:w-[390px] max-w-full bg-cream sm:rounded-[28px] overflow-hidden flex flex-col sm:shadow-2xl h-[100dvh] sm:h-[844px] sm:max-h-[90vh] ${className}`} style={style}>
         {children}
       </div>
     );
@@ -242,12 +258,12 @@
       const current = showActivity ? 'activity' : view;
 
       return (
-        <div className="min-h-screen p-4 flex flex-col items-center justify-center gap-4">
+        <div className="min-h-[100dvh] w-full p-0 sm:p-4 flex flex-col items-center justify-center sm:gap-4">
           {toast && (
             <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-moss text-white px-4 py-2 rounded-full text-xs font-semibold shadow-xl">{toast}</div>
           )}
 
-          <div className="flex gap-1 p-1 rounded-full bg-[#2A2A2A]">
+          <div className="hidden sm:flex gap-1 p-1 rounded-full bg-[#2A2A2A]">
             {tabs.map(t => (
               <button key={t.id} onClick={() => t.id === 'activity' ? (setView('detail'), setShowCompanion(false), setShowActivity(true)) : goto(t.id)}
                 className={`px-4 py-1.5 rounded-full text-[12px] font-medium transition ${current === t.id ? 'bg-cream text-ink' : 'text-[#A9ADA8] hover:text-white'}`}>
@@ -256,7 +272,7 @@
             ))}
           </div>
 
-          <Phone style={{ height: 844, maxHeight: '90vh' }}>
+          <Phone>
             <div className="flex-1 flex flex-col overflow-y-auto hide-scrollbar">
               {view === 'detail' ? (
                 <DetailView retreat={retreat} onEdit={() => goto('create')} onBack={() => goto('create')}
@@ -316,11 +332,11 @@
               <textarea className="field" rows="4" value={f.descripcion} onChange={set('descripcion')} /></div>
           </div>
 
-          <div className="mt-5 space-y-2.5">
+          <div className="mt-5 space-y-2.5 pb-safe">
             <button type="button" onClick={onCancel} className="w-full py-2.5 rounded-lg border border-line bg-white text-[12px] font-medium text-ink">Cancelar</button>
             <button type="submit" className="w-full py-3 rounded-lg bg-moss text-white text-[11px] font-semibold tracking-[0.12em] uppercase hover:bg-mossDark">GUARDAR ACTIVIDAD</button>
+            <HomeBar />
           </div>
-          <div className="pt-3"><HomeBar /></div>
         </form>
       );
     }
@@ -492,7 +508,7 @@
             </div>
           </div>
 
-          <div className="mt-auto sticky bottom-0 px-4 pt-3 pb-1 bg-cream border-t border-line">
+          <div className="mt-auto sticky bottom-0 px-4 pt-3 pb-safe bg-cream border-t border-line shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
             <div className="grid grid-cols-[1fr_1fr] gap-2.5">
               <button onClick={onEdit} className="flex items-center justify-center gap-2 py-3 rounded-lg bg-moss text-white text-[12px] font-medium hover:bg-mossDark transition"><Icon n="pen" s={13} /> Modificar</button>
               <button type="button" onClick={disabledAction('CU 04 - Dar de baja retiro')}
@@ -501,7 +517,7 @@
                 Dar de Baja
               </button>
             </div>
-            <div className="pt-3"><HomeBar /></div>
+            <HomeBar />
           </div>
         </>
       );
@@ -615,12 +631,12 @@
             </div>
           </div>
 
-          <div className="mt-auto sticky bottom-0 bg-cream border-t border-line px-5 pt-3 pb-1">
+          <div className="mt-auto sticky bottom-0 bg-cream border-t border-line px-5 pt-3 pb-safe shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
             <div className="grid grid-cols-[1fr_1.7fr] gap-2.5">
               <button type="button" onClick={onBack} className="py-3 rounded-lg border border-line bg-white text-[12px] font-medium text-ink">Cancelar</button>
               <button type="submit" className="py-3 rounded-lg bg-moss text-white text-[11px] font-semibold tracking-[0.12em] uppercase hover:bg-mossDark">GUARDAR RETIRO</button>
             </div>
-            <div className="pt-3"><HomeBar /></div>
+            <HomeBar />
           </div>
         </form>
       );
@@ -648,7 +664,9 @@
               </select></div>
             <button type="button" onClick={onClose} className="w-full py-2.5 rounded-lg border border-line bg-white text-[12px] font-medium">Cancelar</button>
             <button type="submit" className="w-full py-3 rounded-lg bg-moss text-white text-[11px] font-semibold tracking-[0.12em] uppercase">AGREGAR ACOMPAÑANTE</button>
-            <HomeBar />
+            <div className="pb-safe">
+              <HomeBar />
+            </div>
           </form>
         </div>
       );
