@@ -49,6 +49,12 @@
     textarea.field { line-height: 1.55; resize: none; }
     .lbl { display: block; font-size: 11px; font-weight: 500; color: #3C443F; margin-bottom: 5px; }
     .card { background: #fff; border-radius: 12px; border: 1px solid #EFECE4; padding: 14px; }
+    .btn-disabled {
+      opacity: 0.52 !important;
+      cursor: not-allowed !important;
+      position: relative;
+      filter: grayscale(0.25);
+    }
   </style>
 </head>
 <body class="min-h-screen">
@@ -254,7 +260,7 @@
             <div className="flex-1 flex flex-col overflow-y-auto hide-scrollbar">
               {view === 'detail' ? (
                 <DetailView retreat={retreat} onEdit={() => goto('create')} onBack={() => goto('create')}
-                  onNewActivity={() => setShowActivity(true)} />
+                  onNewActivity={() => setShowActivity(true)} notify={notify} />
               ) : (
                 <NewRetreatView retreat={retreat} onBack={() => goto('detail')}
                   onSave={(f) => { saveRetreat(f); goto('detail'); }}
@@ -322,7 +328,7 @@
     // ==================================================================
     // DETALLE DEL RETIRO
     // ==================================================================
-    function DetailView({ retreat, onEdit, onBack, onNewActivity }) {
+    function DetailView({ retreat, onEdit, onBack, onNewActivity, notify }) {
       const total = retreat.costo;
       const pagado = retreat.pagos.pagado;
       const pendiente = Math.max(total - pagado, 0);
@@ -331,10 +337,21 @@
       const [phoneLine, handle] = retreat.organizadorTelefono.split('\n');
       const [orgName, orgSub] = retreat.organizadorNombre.split(' · ');
 
+      const disabledAction = (cuName) => () => {
+        if (notify) notify(`ℹ ${cuName}: función fuera de alcance en este prototipo`);
+      };
+
       return (
         <>
           <StatusBar />
-          <TopBar title="Detalle del Retiro" right={<Icon n="share" s={17} />} />
+          <TopBar title="Detalle del Retiro"
+            right={
+              <button type="button" onClick={disabledAction('CU 10 - Compartir información')}
+                className="w-6 h-6 flex items-center justify-end text-muted hover:text-ink btn-disabled"
+                title="CU 10: Compartir información (No implementado)">
+                <Icon n="share" s={17} />
+              </button>
+            } />
 
           <div className="px-4 space-y-3 pb-4">
             <div className="relative rounded-xl overflow-hidden h-[172px] bg-stone-300">
@@ -391,8 +408,16 @@
               </div>
               <div className="text-[12px] text-ink mt-3">{phoneLine}</div>
               <div className="grid grid-cols-2 gap-2.5 mt-3">
-                <button className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-line bg-white text-[12px] font-medium text-moss"><Icon n="phone" s={14} /> Llamar</button>
-                <button className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-sage text-[12px] font-medium text-moss"><Icon n="msg" s={14} /> Mensaje</button>
+                <button type="button" onClick={disabledAction('Contacto con organizador')}
+                  className="btn-disabled flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-line bg-white text-[12px] font-medium text-moss"
+                  title="Acción no contemplada en el alcance del prototipo">
+                  <Icon n="phone" s={14} /> Llamar
+                </button>
+                <button type="button" onClick={disabledAction('Contacto con organizador')}
+                  className="btn-disabled flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-sage text-[12px] font-medium text-moss"
+                  title="Acción no contemplada en el alcance del prototipo">
+                  <Icon n="msg" s={14} /> Mensaje
+                </button>
               </div>
             </div>
 
@@ -427,7 +452,7 @@
                   </div>
                 ))}
               </div>
-              <button type="button" onClick={onNewActivity} className="mt-3 w-full py-2.5 rounded-lg border border-line bg-white text-[12px] font-medium text-moss">+ Nueva Actividad</button>
+              <button type="button" onClick={onNewActivity} className="mt-3 w-full py-2.5 rounded-lg border border-line bg-white text-[12px] font-medium text-moss hover:bg-[#F2F6F2] transition">+ Nueva Actividad</button>
             </div>
 
             <div className="rounded-xl p-4 bg-[#EAF0E8] border border-[#DCE5D9]">
@@ -443,9 +468,17 @@
                 <div className="flex justify-between"><span className="text-[#4B534E]">Pendiente</span><span className="font-semibold text-ink">{fmtMoney(pendiente)}</span></div>
               </div>
               <div className="flex justify-between items-center text-[11px] font-medium text-moss mt-3 pt-3 border-t border-[#D5DFD2]">
-                <span>Ver Historial</span><Icon n="ext" s={12} />
+                <button type="button" onClick={disabledAction('CU 09 / Historial de pagos')}
+                  className="btn-disabled flex items-center justify-between w-full text-left font-medium text-moss"
+                  title="CU 09: Consultar pagos realizados (No implementado)">
+                  <span>Ver Historial</span><Icon n="ext" s={12} />
+                </button>
               </div>
-              <button className="mt-3 w-full py-2.5 rounded-lg bg-white border border-[#DCE5D9] text-[12px] font-medium text-moss">+ Registrar Pago</button>
+              <button type="button" onClick={disabledAction('CU 08 - Registrar pago')}
+                className="btn-disabled mt-3 w-full py-2.5 rounded-lg bg-white border border-[#DCE5D9] text-[12px] font-medium text-moss"
+                title="CU 08: Registrar pago (No implementado en esta entrega)">
+                + Registrar Pago
+              </button>
             </div>
 
             <div className="card">
@@ -461,8 +494,12 @@
 
           <div className="mt-auto sticky bottom-0 px-4 pt-3 pb-1 bg-cream border-t border-line">
             <div className="grid grid-cols-[1fr_1fr] gap-2.5">
-              <button onClick={onEdit} className="flex items-center justify-center gap-2 py-3 rounded-lg bg-moss text-white text-[12px] font-medium"><Icon n="pen" s={13} /> Modificar</button>
-              <button className="py-3 rounded-lg bg-[#FBEDEA] text-[#B4413A] text-[12px] font-medium">Dar de Baja</button>
+              <button onClick={onEdit} className="flex items-center justify-center gap-2 py-3 rounded-lg bg-moss text-white text-[12px] font-medium hover:bg-mossDark transition"><Icon n="pen" s={13} /> Modificar</button>
+              <button type="button" onClick={disabledAction('CU 04 - Dar de baja retiro')}
+                className="btn-disabled py-3 rounded-lg bg-[#FBEDEA] text-[#B4413A] text-[12px] font-medium"
+                title="CU 04: Dar de baja retiro (No implementado en esta entrega)">
+                Dar de Baja
+              </button>
             </div>
             <div className="pt-3"><HomeBar /></div>
           </div>
