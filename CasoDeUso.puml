@@ -1,0 +1,15 @@
+@startuml
+actor Usuario
+actor Sistema
+
+usecase "Registrar Retiro" as UC1
+usecase "Modificar Retiro" as UC2
+usecase "Consultar retiro" as UC3
+usecase "Registrar Pago" as UC4
+usecase "Registrar Pago abonado" as UC5
+usecase "Enviar Alerta" as UC6
+usecase "Registrar Alerta Realizada" as UC7
+
+Sistema --> UC6
+UC6 .--> "<<inc>>" UC7
+@enduml

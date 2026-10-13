@@ -1,0 +1,211 @@
+@startuml
+
+' =========================
+' CONFIGURACIÓN BÁSICA
+' =========================
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+' =========================
+' CLASES Y PAQUETES
+' =========================
+
+package "Gestión de Usuarios" {
+    class Usuario {
+        idUsuario
+        nombre
+        apellido
+        email
+        telefono
+        retiro : Retiro
+        gasto : Gasto
+        valoracion : Valoracion
+        recordatorio : Recordatorio
+        --
+        crear()
+        mostrar()
+        modificarPerfil()
+        consultarHistorial()
+    }
+}
+
+package "Gestión de Retiros" {
+    class EstadoRetiro {
+        nombreEstado
+        --
+        crear()
+        mostrar()
+        tomarNombreEstado()
+        mostrarNombreEstado()
+    }
+
+    note right of EstadoRetiro
+        Los métodos de seteo y consulta 
+        (tomarAtributo() / mostrarAtributo()) 
+        se extienden implícitamente para 
+        todas las clases del diagrama.
+    end note
+
+    class Retiro {
+        idRetiro
+        nombre
+        ubicacion
+        fechaInicio
+        fechaFin
+        duracion
+        costoTotal
+        requisitos
+        contactoOrganizador
+        estado : EstadoRetiro
+        actividad : Actividad
+        acompañante : Acompañante
+        pago : Pago
+        valoracion : Valoracion
+        --
+        crear()
+        mostrar()
+        conocerEstado()
+        conocerActividad()
+        conocerAcompañante()
+        conocerPago()
+        conocerValoracion()
+        cambiarEstado()
+        calcularDuracion()
+        agregarActividad()
+        agregarAcompañante()
+        compartirInfo()
+    }
+
+    class Actividad {
+        idActividad
+        descripcion
+        precio
+        --
+        crear()
+        mostrar()
+        modificar()
+    }
+
+    class Acompañante {
+        idAcompañante
+        nombre
+        apellido
+        vinculo
+        --
+        crear()
+        mostrar()
+        modificar()
+    }
+}
+
+package "Gestión de Pagos" {
+    class MetodoPago {
+        nombreMetodo
+        --
+        crear()
+        mostrar()
+    }
+
+    class EstadoPago {
+        valor
+        --
+        crear()
+        mostrar()
+    }
+
+    class Pago {
+        idPago
+        monto
+        fechaPago
+        metodoPago : MetodoPago
+        estadoPago : EstadoPago
+        retiro : Retiro
+        --
+        crear()
+        mostrar()
+        conocerMetodoPago()
+        conocerEstadoPago()
+        conocerRetiro()
+        registrarPago()
+        consultarComprobante()
+    }
+
+    class Gasto {
+        idGasto
+        monto
+        fecha
+        descripcion
+        usuario : Usuario
+        pago : Pago
+        --
+        crear()
+        mostrar()
+        conocerUsuario()
+        conocerPago()
+        obtenerMonto()
+    }
+}
+
+package "Feedback y Notificaciones" {
+    class Valoracion {
+        idValoracion
+        puntuacion
+        comentario
+        fecha
+        usuario : Usuario
+        retiro : Retiro
+        --
+        crear()
+        mostrar()
+        conocerUsuario()
+        conocerRetiro()
+        modificarValoracion()
+    }
+
+    class TipoRecordatorio {
+        nombreTipo
+        --
+        crear()
+        mostrar()
+    }
+
+    class Recordatorio {
+        idRecordatorio
+        fechaHora
+        mensaje
+        leido
+        tipo : TipoRecordatorio
+        usuario : Usuario
+        --
+        crear()
+        mostrar()
+        conocerTipo()
+        conocerUsuario()
+        notificar()
+        marcarComoLeido()
+    }
+}
+
+' =========================
+' RELACIONES
+' =========================
+
+Usuario --> " 0..* " Retiro : organiza
+Usuario --> " 0..* " Gasto : registra
+Usuario --> " 0..* " Valoracion : publica
+Usuario --> " 0..* " Recordatorio : recibe
+
+Retiro --> " 1 " EstadoRetiro
+Retiro *--> " 0..* " Actividad
+Retiro *--> " 0..* " Acompañante
+Retiro *--> " 0..* " Pago
+Retiro --> " 0..* " Valoracion
+
+Pago --> " 1 " MetodoPago
+Pago --> " 1 " EstadoPago
+Gasto --> " 1 " Pago
+
+Recordatorio --> " 1 " TipoRecordatorio
+
+@enduml
