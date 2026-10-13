@@ -1,16 +1,16 @@
 @startuml diagramaDeEstados
 skinparam Monochrome true
 
-[*] --> Interesado : Registrar retiro
+[*] --> Interesado : Registrar retiro CU 01
 
 Interesado --> Reservado : Confirmar reserva
-Interesado --> Cancelado : Modificar retiro agendado / Dar de baja
+Interesado --> Cancelado : Modificar retiro agendado CU 04 (Dar de baja)
 
-Reservado --> Pagado : Registrar pago total
-Reservado --> Cancelado : Modificar retiro agendado / Dar de baja
+Reservado --> Pagado : Registrar pago CU 08
+Reservado --> Cancelado : Modificar retiro agendado CU 04 (Dar de baja)
 
-Pagado --> Concluido : Modificar retiro agendado
-Pagado --> Cancelado : Modificar retiro agendado / Dar de baja
+Pagado --> Concluido : Modificar retiro agendado CU 04
+Pagado --> Cancelado : Modificar retiro agendado CU 04 (Dar de baja)
 
 Concluido --> [*]
 Cancelado --> [*]
