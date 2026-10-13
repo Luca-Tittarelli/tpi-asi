@@ -1,0 +1,20 @@
+@startuml diagramaDeEstados
+skinparam Monochrome true
+
+[*] --> Interesado : Registrar retiro (RF01)
+
+Interesado --> Reservado : Confirmar reserva
+Interesado --> Cancelado : Dar de baja (RF04)
+Interesado --> Interesado : Modificar retiro agendado (CU 04)
+
+Reservado --> Pagado : Registrar pago total (RF08)
+Reservado --> Cancelado : Dar de baja (RF04)
+Reservado --> Reservado : Modificar retiro agendado (CU 04)
+
+Pagado --> Concluido : Fecha actual > Fecha de fin del retiro
+Pagado --> Cancelado : Cancelar por imprevisto
+
+Concluido --> [*]
+Cancelado --> [*]
+
+@enduml
